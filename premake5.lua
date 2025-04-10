@@ -112,6 +112,7 @@ filter "action:gmake"
 	buildoptions { 
 		"-Wall",
 		"-Wextra",
+        "-Wno-incompatible-pointer-types"
 	}
 
 filter "action:vs*"

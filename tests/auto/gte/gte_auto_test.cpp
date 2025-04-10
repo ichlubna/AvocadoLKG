@@ -1,3 +1,4 @@
+#include <cstring>
 #include "cpu/gte/gte.h"
 #include "log_file.h"
 #include "utils/file.h"

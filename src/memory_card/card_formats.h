@@ -3,6 +3,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <cstdint>
 
 namespace memory_card {
 constexpr int MEMCARD_SIZE = 128 * 1024;
