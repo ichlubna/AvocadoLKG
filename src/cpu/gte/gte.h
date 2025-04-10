@@ -159,7 +159,11 @@ class GTE {
     void sqr();
     void op();
 
+    float holoShift;
+
    public:
+    void setHoloShift(float shift) { holoShift = shift; };
+
     struct GTE_ENTRY {
         enum class MODE { read, write, func } mode;
 

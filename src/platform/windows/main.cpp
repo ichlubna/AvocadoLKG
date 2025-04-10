@@ -21,6 +21,7 @@
 #include "utils/platform_tools.h"
 #include "version.h"
 #include "memory_card/card_formats.h"
+#include "GLinjection.hpp"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -193,6 +194,10 @@ int main(int argc, char** argv) {
         fatalError("Cannot setup graphics");
         return 1;
     }
+
+    GLInjection injection;
+    injection.init(opengl->width, opengl->height);
+    size_t frameID = 0;
 
     auto gui = std::make_unique<GUI>(window, glContext);
     Sound::init();
@@ -432,15 +437,27 @@ int main(int argc, char** argv) {
             state::manageTimeTravel(sys.get());
         }
 
+        sys->cpu->gte.setHoloShift(200*(frameID%2));
         SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
         opengl->render(sys->gpu.get());
+
+        
+        if (sys->gpu->isRenderReady()) 
+        {
+            frameID++;
+            injection.captureRender(frameID%2);
+        }
 
         gui->statusFramelimitter = frameLimitEnabled;
         gui->statusMouseLocked = inputManager->mouseLocked;
         gui->render(sys);
 
-        SDL_GL_SwapWindow(window);
-
+        // TODO do only when all views are captured, the same with swap window
+        if(frameID%2 == 1)
+        {
+            injection.render();
+            SDL_GL_SwapWindow(window);
+        }
         gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
     }
     if (config.options.emulator.preserveState && sys->state != System::State::halted) {

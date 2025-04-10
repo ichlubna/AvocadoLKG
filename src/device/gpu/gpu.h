@@ -53,6 +53,7 @@ class GPU {
     // TODO: Move Debug GUI stuff to class and befriend it
    public:
     // GPU Registers
+    bool isRenderReady() {return !vertices.empty(); }
 
     GP0_E1 gp0_e1;
     GP0_E2 gp0_e2;

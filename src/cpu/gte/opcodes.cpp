@@ -345,7 +345,9 @@ void GTE::pushColor(uint32_t r, uint32_t g, uint32_t b) {
  * translate it (TR) and apply perspective transformation.
  */
 void GTE::rtps(int n, bool setMAC0) {
-    int64_t mac3 = multiplyMatrixByVectorRTP(rotation, v[n], translation);
+    auto holoTranslation = translation;
+    holoTranslation.x += holoShift;
+    int64_t mac3 = multiplyMatrixByVectorRTP(rotation, v[n], holoTranslation);
 
     pushScreenZ((int32_t)(mac3 >> 12));
     int64_t h_s3z = divideUNR(h, s[3].z);
@@ -415,6 +417,7 @@ void GTE::mvmva(int mx, int vx, int tx) {
     Vector<int32_t> Tx;
     if (tx == 0) {
         Tx = translation;
+        Tx.x += holoShift;
     } else if (tx == 1) {
         Tx = backgroundColor;
     } else if (tx == 2) {
