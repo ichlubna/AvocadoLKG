@@ -3,12 +3,20 @@
 class GLInjection
 {
     public:
-    void init(int windowWidth, int windowHeight)
+    class HoloParams
     {
-        width = windowWidth;
-        height = windowHeight;
-        quiltWidth = windowWidth*cols;
-        quiltHeight = windowHeight*rows; 
+        public:
+        int width;
+        int height;
+        int cols;
+        int rows;
+    };
+
+    void init(HoloParams holoParams)
+    {
+        params = holoParams;
+        quiltWidth = params.width*params.cols;
+        quiltHeight = params.height*params.rows; 
         GLint drawFbo = 0, readFbo = 0;
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFbo);
         glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFbo);
@@ -73,9 +81,9 @@ class GLInjection
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &originalFbo);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, originalFbo); 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-        int col = viewID % cols;
-        int row = viewID / cols;
-        glBlitFramebuffer(0, 0, width, height, col*width, row*height, (col+1)*width, (row+1)*height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        int col = viewID % params.cols;
+        int row = viewID / params.cols;
+        glBlitFramebuffer(0, 0, params.width, params.height, col*params.width, row*params.height, (col+1)*params.width, (row+1)*params.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_FRAMEBUFFER, originalFbo);
     }
 
@@ -94,16 +102,13 @@ class GLInjection
     }
 
     private:
+    HoloParams params;
     GLuint fbo;
     GLuint fboTexture;
     GLuint shaderProgram;
     GLuint emptyVAO;
-    int width;
-    int height;
     int quiltWidth;
     int quiltHeight;
-    int cols = 2;
-    int rows = 1;
     const char *vertexShaderSource = R""""(
         #version 330 core
         out vec2 uv;

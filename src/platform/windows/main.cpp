@@ -195,9 +195,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    GLInjection::HoloParams holoParams;
+    holoParams.rows = 3;
+    holoParams.cols = 3;
+    holoParams.width = opengl->width;
+    holoParams.height = opengl->height;
     GLInjection injection;
-    injection.init(opengl->width, opengl->height);
-    size_t frameID = 0;
+    injection.init(holoParams);
+    int viewID = 0;
 
     auto gui = std::make_unique<GUI>(window, glContext);
     Sound::init();
@@ -423,7 +428,7 @@ int main(int argc, char** argv) {
             // Fixes ImGui window drawing
             forceRedraw = true;
         }
-
+        
         if (sys->state == System::State::run) {
             sys->gpu->clear();
             sys->controller->update();
@@ -437,27 +442,26 @@ int main(int argc, char** argv) {
             state::manageTimeTravel(sys.get());
         }
 
-        sys->cpu->gte.setHoloShift(200*(frameID%2));
-        SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
-        opengl->render(sys->gpu.get());
+            sys->cpu->gte.setHoloShift(200*viewID);
+            SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
+            opengl->render(sys->gpu.get());
+ 
+            if (sys->gpu->isRenderReady()) 
+            {
+                injection.captureRender(viewID);
+                viewID = (viewID+1) % (holoParams.rows*holoParams.cols);
+            }
 
-        
-        if (sys->gpu->isRenderReady()) 
-        {
-            frameID++;
-            injection.captureRender(frameID%2);
-        }
 
-        gui->statusFramelimitter = frameLimitEnabled;
-        gui->statusMouseLocked = inputManager->mouseLocked;
-        gui->render(sys);
-
-        // TODO do only when all views are captured, the same with swap window
-        if(frameID%2 == 1)
+        if(viewID == holoParams.rows*holoParams.cols-1)
         {
             injection.render();
+            gui->statusFramelimitter = frameLimitEnabled;
+            gui->statusMouseLocked = inputManager->mouseLocked;
+            gui->render(sys);
             SDL_GL_SwapWindow(window);
         }
+
         gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
     }
     if (config.options.emulator.preserveState && sys->state != System::State::halted) {
