@@ -1,22 +1,43 @@
-#include<iostream>
+#include <iostream>
+#include <map>
+#include <stdexcept>
+#include <vector>
+#include <fstream>
+#include <string>
+#include <boost/algorithm/string/split.hpp> 
+#include <boost/algorithm/string/classification.hpp> 
 
 class GLInjection
 {
     public:
-    class HoloParams
+    class HoloSettings
     {
-        public:
-        int width;
-        int height;
-        int cols;
-        int rows;
+        public: 
+        std::map<std::string, float> params;
+
+        HoloSettings(std::string fileName)
+        {
+            std::ifstream file(fileName);
+            if(file.fail())
+                throw std::runtime_error("Cannot open file: "+fileName);
+            std::string line;
+            while (std::getline(file, line))
+            {
+                std::vector<std::string> tokens;
+                boost::split(tokens, line, boost::is_any_of("="), boost::token_compress_on);
+                params[tokens[0]] = std::stof(tokens[1]);
+            }
+        }
+        float operator[](std::string key){ return params[key];}
+        int i(std::string key){ return static_cast<int>(params[key]);}
     };
 
-    void init(HoloParams holoParams)
-    {
-        params = holoParams;
-        quiltWidth = params.width*params.cols;
-        quiltHeight = params.height*params.rows; 
+    GLInjection(int renderWidth, int renderHeight, std::string configFile) : params{configFile}
+    {    
+        viewWidth = renderWidth;
+        viewHeight = renderHeight;
+        quiltWidth = viewWidth*params["Cols"];
+        quiltHeight = viewHeight*params["Rows"]; 
         GLint drawFbo = 0, readFbo = 0;
         glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFbo);
         glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFbo);
@@ -81,9 +102,9 @@ class GLInjection
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &originalFbo);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, originalFbo); 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
-        int col = viewID % params.cols;
-        int row = viewID / params.cols;
-        glBlitFramebuffer(0, 0, params.width, params.height, col*params.width, row*params.height, (col+1)*params.width, (row+1)*params.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        int col = viewID % params.i("Cols");
+        int row = viewID / params.i("Cols");
+        glBlitFramebuffer(0, 0, viewWidth, viewHeight, col*viewWidth, row*viewHeight, (col+1)*viewWidth, (row+1)*viewHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_FRAMEBUFFER, originalFbo);
     }
 
@@ -101,8 +122,30 @@ class GLInjection
         glBindFramebuffer(GL_FRAMEBUFFER, originalFbo);
     }
 
+    int views()
+    {
+        return params.i("Rows")*params.i("Cols");
+    } 
+
+    float viewOffset(int viewID, float distance)
+    {
+        return (viewID - ((views()-1)/2.0f))*distance;
+    }
+
+    float cameraStep()
+    {
+        return params["CameraSpacingStep"];
+    }
+    
+    float focusStep()
+    {
+        return params["FocusSpacingStep"];
+    }
+
     private:
-    HoloParams params;
+    int viewWidth;
+    int viewHeight;
+    HoloSettings params;
     GLuint fbo;
     GLuint fboTexture;
     GLuint shaderProgram;

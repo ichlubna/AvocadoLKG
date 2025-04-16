@@ -195,14 +195,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    GLInjection::HoloParams holoParams;
-    holoParams.rows = 3;
-    holoParams.cols = 3;
-    holoParams.width = opengl->width;
-    holoParams.height = opengl->height;
-    GLInjection injection;
-    injection.init(holoParams);
-    int viewID = 0;
+    GLInjection injection(opengl->width, opengl->height, "holo.conf");
+    float holoFocus = 0.0f;
+    float holoCameraDistance = 100.0f;
 
     auto gui = std::make_unique<GUI>(window, glContext);
     Sound::init();
@@ -360,6 +355,10 @@ int main(int argc, char** argv) {
             } else if (event.type == SDL_CONTROLLERAXISMOTION) {
                 if (std::abs(event.caxis.value) == 32767) button = Key::controllerMove(event.caxis);
             }
+                if (event.key.keysym.sym == SDLK_HOME) holoFocus += injection.focusStep();
+                if (event.key.keysym.sym == SDLK_END) holoFocus -= injection.focusStep();
+                if (event.key.keysym.sym == SDLK_PAGEUP) holoCameraDistance += injection.cameraStep();
+                if (event.key.keysym.sym == SDLK_PAGEDOWN) holoCameraDistance -= injection.cameraStep();
 
             if (!inputManager->keyboardCaptured && button.type != Key::Type::None) {
                 if (event.key.keysym.sym == SDLK_ESCAPE) running = false;
@@ -428,40 +427,39 @@ int main(int argc, char** argv) {
             // Fixes ImGui window drawing
             forceRedraw = true;
         }
-        
-        if (sys->state == System::State::run) {
-            sys->gpu->clear();
-            sys->controller->update();
 
-            sys->emulateFrame();
-            if (gui->singleFrame) {
-                gui->singleFrame = false;
-                sys->state = System::State::pause;
+        int viewID = 0;
+        while(viewID<injection.views())
+        {            
+            if (sys->state == System::State::run) {
+                sys->gpu->clear();
+                sys->controller->update();
+
+                sys->emulateFrame();
+                if (gui->singleFrame) {
+                    gui->singleFrame = false;
+                    sys->state = System::State::pause;
+                }
+
+                state::manageTimeTravel(sys.get());
             }
+                // It should be just viewID but for some reason, the transformation is always one frame delayed so the id is rotated as a workaround 
+                sys->cpu->gte.setHoloShift(injection.viewOffset((viewID+1)%injection.views(), holoCameraDistance));
+                SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
+                opengl->render(sys->gpu.get(), injection.viewOffset(viewID, holoFocus));
+     
+                if (sys->gpu->isRenderReady()) 
+                {
+                    injection.captureRender(viewID);
+                    viewID++;
+                }
 
-            state::manageTimeTravel(sys.get());
         }
-
-            sys->cpu->gte.setHoloShift(200*viewID);
-            SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
-            opengl->render(sys->gpu.get());
- 
-            if (sys->gpu->isRenderReady()) 
-            {
-                injection.captureRender(viewID);
-                viewID = (viewID+1) % (holoParams.rows*holoParams.cols);
-            }
-
-
-        if(viewID == holoParams.rows*holoParams.cols-1)
-        {
-            injection.render();
-            gui->statusFramelimitter = frameLimitEnabled;
-            gui->statusMouseLocked = inputManager->mouseLocked;
-            gui->render(sys);
-            SDL_GL_SwapWindow(window);
-        }
-
+        injection.render();
+        gui->statusFramelimitter = frameLimitEnabled;
+        gui->statusMouseLocked = inputManager->mouseLocked;
+        gui->render(sys);
+        SDL_GL_SwapWindow(window);
         gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
     }
     if (config.options.emulator.preserveState && sys->state != System::State::halted) {

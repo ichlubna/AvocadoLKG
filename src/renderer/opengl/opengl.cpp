@@ -242,7 +242,7 @@ void OpenGL::updateVramTexture(gpu::GPU* gpu) {
     vramTex->update(vramUnpacked.data());
 }
 
-void OpenGL::renderVertices(gpu::GPU* gpu) {
+void OpenGL::renderVertices(gpu::GPU* gpu, float shift) {
     static vec2 lastPos;
     auto& buffer = gpu->vertices;
     if (buffer.empty()) {
@@ -268,6 +268,7 @@ void OpenGL::renderVertices(gpu::GPU* gpu) {
     renderShader->getUniform("vram").i(0);
     renderShader->getUniform("displayAreaPos").f(areaX, areaY);
     renderShader->getUniform("displayAreaSize").f(areaW, areaH);
+    renderShader->getUniform("holoShift").f(shift);
 
     glBlendColor(0.25f, 0.25f, 0.25f, 0.5f);
 
@@ -400,7 +401,7 @@ void OpenGL::renderBlit(gpu::GPU* gpu, bool software) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void OpenGL::render(gpu::GPU* gpu) {
+void OpenGL::render(gpu::GPU* gpu, float shift) {
     vao->bind();
     // Clear framebuffer
     glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -415,7 +416,7 @@ void OpenGL::render(gpu::GPU* gpu) {
 
         if (hardwareRendering) {
             // Render all GPU commands
-            renderVertices(gpu);
+            renderVertices(gpu, shift);
         }
 
         // Blit rendered polygons to screen

@@ -31,7 +31,7 @@ class OpenGL {
     OpenGL();
     ~OpenGL();
     bool setup();
-    void render(gpu::GPU* gpu);
+    void render(gpu::GPU* gpu, float shift);
 
    private:
     int busToken = -1;
@@ -65,7 +65,7 @@ class OpenGL {
     bool loadExtensions();
     bool loadShaders();
     void bindRenderAttributes();
-    void renderVertices(gpu::GPU* gpu);
+    void renderVertices(gpu::GPU* gpu, float shift);
 
     std::vector<uint8_t> vram24Unpacked;
     std::vector<uint16_t> vramUnpacked;

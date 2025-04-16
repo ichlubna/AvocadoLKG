@@ -1,5 +1,6 @@
 uniform vec2 displayAreaPos;
 uniform vec2 displayAreaSize;
+uniform float holoShift;
 
 uniform sampler2D vram;
 
@@ -43,6 +44,7 @@ in uint textureWindow;
 void main() {
     vec2 pos = vec2((position.x - displayAreaPos.x) / displayAreaSize.x, (position.y - displayAreaPos.y) / displayAreaSize.y);
     // vec2 pos = vec2(position.x / 1024.f, position.y / 512.f);
+    pos.x += holoShift;
     fragColor = vec3(float(color.r) / 255.f, float(color.g) / 255.f, float(color.b) / 255.f);
     fragTexcoord = vec2(texcoord.x, texcoord.y);
     fragFlatColor = uvec3(color.r, color.g, color.b);
