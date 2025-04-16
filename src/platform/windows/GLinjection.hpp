@@ -108,14 +108,25 @@ class GLInjection
         glBindFramebuffer(GL_FRAMEBUFFER, originalFbo);
     }
 
-    void render()
+    void render(bool renderHolo=true)
     {
         GLint originalFbo = 0;
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &originalFbo);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, originalFbo); 
         glBindTexture(GL_TEXTURE_2D, fboTexture);
-        glUseProgram(shaderProgram);
+        glUseProgram(shaderProgram);  
+
+        glUniform1f(glGetUniformLocation(shaderProgram, "holoTilt"), params["Tilt"]);
+        glUniform1f(glGetUniformLocation(shaderProgram, "holoPitch"), params["Pitch"]);
+        glUniform1f(glGetUniformLocation(shaderProgram, "holoCenter"), params["Center"]);
+        glUniform1f(glGetUniformLocation(shaderProgram, "holoViewPortionElement"), params["ViewPortionElement"]);
+        glUniform1f(glGetUniformLocation(shaderProgram, "holoSubp"), params["Subp"]);
+        glUniform1i(glGetUniformLocation(shaderProgram, "viewCount"), views());
+        glUniform1i(glGetUniformLocation(shaderProgram, "holoCols"), params["Cols"]);
+        glUniform1i(glGetUniformLocation(shaderProgram, "holoRows"), params["Rows"]);
+        glUniform1i(glGetUniformLocation(shaderProgram, "mode"), renderHolo);
+        
         glBindVertexArray(emptyVAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
@@ -165,14 +176,61 @@ class GLInjection
         )"""";
     const char *fragmentShaderSource =  R""""(
         #version 330 core
+
         uniform sampler2D fboTexture;
+        uniform float holoTilt;
+        uniform float holoPitch;
+        uniform float holoCenter;
+        uniform float holoViewPortionElement;
+        uniform float holoSubp;
+        uniform int viewCount;
+        uniform int holoCols;
+        uniform int holoRows;
+        uniform int mode;
         in vec2 uv;
         out vec4 fragColor;
 
+        const int MODE_HOLO = 0;
+        const int MODE_QUILT = 1;
+
+        vec2 texArr(vec3 uvz)
+        {
+            int viewsCount = holoCols * holoRows;
+            float z = floor(uvz.z * viewsCount);
+            float x = (mod(z, holoCols) + uvz.x) / holoCols;
+            float y = (floor(z / holoCols) + uvz.y) / holoRows;
+            return vec2(x, y) * vec2(holoViewPortionElement, holoViewPortionElement);
+        }
+
+        void createHoloView()
+        {
+            float invView = 1.0f;
+            int ri = 0;
+            int bi = 2;
+
+            vec2 texCoords = uv;
+            vec3 nuv = vec3(texCoords.xy, 0.0);
+
+            vec4 rgb[3];
+            for (int i=0; i < 3; i++) 
+            {
+                nuv.z = (texCoords.x + i * holoSubp + texCoords.y * holoTilt) * holoPitch - holoCenter;
+                nuv.z = mod(nuv.z + ceil(abs(nuv.z)), 1.0);
+                nuv.z = (1.0 - invView) * nuv.z + invView * (1.0 - nuv.z);
+                vec2 coords = texArr(nuv);
+                rgb[i] = texture2D(fboTexture, coords);
+            }
+
+            vec4 color = vec4(rgb[ri].r, rgb[1].g, rgb[bi].b, 1.0);
+            fragColor = color;
+        }
+
         void main(void)
         {
-            vec4 color = texture(fboTexture, uv);
-            fragColor = color;
+            if(mode == MODE_QUILT)
+                fragColor = texture(fboTexture, uv);
+            else if(mode == MODE_HOLO)
+                createHoloView();
         }
         )"""";
 

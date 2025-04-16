@@ -198,6 +198,7 @@ int main(int argc, char** argv) {
     GLInjection injection(opengl->width, opengl->height, "holo.conf");
     float holoFocus = 0.0f;
     float holoCameraDistance = 100.0f;
+    bool holoEnabled = true;
 
     auto gui = std::make_unique<GUI>(window, glContext);
     Sound::init();
@@ -359,10 +360,12 @@ int main(int argc, char** argv) {
                 if (event.key.keysym.sym == SDLK_END) holoFocus -= injection.focusStep();
                 if (event.key.keysym.sym == SDLK_PAGEUP) holoCameraDistance += injection.cameraStep();
                 if (event.key.keysym.sym == SDLK_PAGEDOWN) holoCameraDistance -= injection.cameraStep();
+                if (event.key.keysym.sym == SDLK_INSERT) holoCameraDistance -= injection.cameraStep();
 
             if (!inputManager->keyboardCaptured && button.type != Key::Type::None) {
                 if (event.key.keysym.sym == SDLK_ESCAPE) running = false;
                 if (event.key.keysym.sym == SDLK_AC_BACK) running = false;
+                if (event.key.keysym.sym == SDLK_INSERT) holoEnabled = !holoEnabled;
                 if (button == Key(config.hotkeys["toggle_menu"])) gui->showMenu = !gui->showMenu;
                 if (button == Key(config.hotkeys["reset"])) {
                     if (event.key.keysym.mod & KMOD_SHIFT) {
@@ -455,7 +458,7 @@ int main(int argc, char** argv) {
                 }
 
         }
-        injection.render();
+        injection.render(holoEnabled);
         gui->statusFramelimitter = frameLimitEnabled;
         gui->statusMouseLocked = inputManager->mouseLocked;
         gui->render(sys);
