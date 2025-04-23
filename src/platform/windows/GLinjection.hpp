@@ -152,6 +152,11 @@ class GLInjection
     {
         return params["FocusSpacingStep"];
     }
+    
+    int viewsOffset()
+    {
+        return static_cast<int>(params["ViewsOffset"]);
+    }
 
     private:
     int viewWidth;

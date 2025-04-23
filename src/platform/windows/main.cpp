@@ -447,7 +447,7 @@ int main(int argc, char** argv) {
                 state::manageTimeTravel(sys.get());
             }
                 // It should be just viewID but for some reason, the transformation is always one frame delayed so the id is rotated as a workaround
-                sys->cpu->gte.setHoloShift(injection.viewOffset((viewID+1)%injection.views(), holoCameraDistance));
+                sys->cpu->gte.setHoloShift(injection.viewOffset((viewID+injection.viewsOffset())%injection.views(), holoCameraDistance));
                 SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
                 opengl->render(sys->gpu.get(), injection.viewOffset(viewID, holoFocus));
      
