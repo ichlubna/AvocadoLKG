@@ -3,7 +3,7 @@ A Modern PlayStation 1 emulator.
 
 ## LKG Version
 
-This repository is an extension of the original Avocado repo. This code supports multiview rendering which can be used to play the game on a 3D display by Looking Glass Factory. The following parameters need to be added to the holo.conf file in the ~/.local/share/avocado directory. The parameters are calibration values for the given 3D display and can be retreived by using [this](https://github.com/ichlubna/getLKGCalibration) tool. The numpad keys Home and End are used to refocus the scene, Page Up and Down to change the camera spacing. The rows, cols, spacing, and steps can be adjusted independently on the display model. 
+This repository is an extension of the original Avocado repo. This code supports multiview rendering which can be used to play the game on a 3D display by Looking Glass Factory. The following parameters need to be added to the holo.conf file in the ~/.local/share/avocado directory. The parameters are calibration values for the given 3D display and can be retreived by using [this](https://github.com/ichlubna/getLKGCalibration) tool. The keys Home and End are used to refocus the scene, Page Up and Down to change the camera spacing, and Insert to switch between holo and quilt view. The rows, cols, spacing, and steps can be adjusted independently on the display model. 
 ```
 [Holo]
 Rows=3

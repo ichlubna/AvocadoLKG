@@ -446,7 +446,7 @@ int main(int argc, char** argv) {
 
                 state::manageTimeTravel(sys.get());
             }
-                // It should be just viewID but for some reason, the transformation is always one frame delayed so the id is rotated as a workaround 
+                // It should be just viewID but for some reason, the transformation is always one frame delayed so the id is rotated as a workaround
                 sys->cpu->gte.setHoloShift(injection.viewOffset((viewID+1)%injection.views(), holoCameraDistance));
                 SDL_GL_GetDrawableSize(window, &opengl->width, &opengl->height);
                 opengl->render(sys->gpu.get(), injection.viewOffset(viewID, holoFocus));
@@ -456,14 +456,16 @@ int main(int argc, char** argv) {
                     injection.captureRender(viewID);
                     viewID++;
                 }
+        gui->statusFramelimitter = frameLimitEnabled;
+        gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
 
         }
         injection.render(holoEnabled);
-        gui->statusFramelimitter = frameLimitEnabled;
         gui->statusMouseLocked = inputManager->mouseLocked;
         gui->render(sys);
         SDL_GL_SwapWindow(window);
-        gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
+        //gui->statusFramelimitter = frameLimitEnabled;
+        //gui->statusFps = limitFramerate(frameLimitEnabled, sys->gpu->isNtsc());
     }
     if (config.options.emulator.preserveState && sys->state != System::State::halted) {
         state::saveLastState(sys.get());
