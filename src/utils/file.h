@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stdint.h> 
 
 std::string getPath(const std::string& name);
 std::string getFilenameExt(const std::string& name);

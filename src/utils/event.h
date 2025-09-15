@@ -1,6 +1,7 @@
 #pragma once
 #include <eventbus/EventBus.h>
 #include <string>
+#include <stdint.h> 
 
 extern Dexode::EventBus bus;
 
